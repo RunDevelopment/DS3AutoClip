@@ -35,6 +35,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.stateLabel = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
+            this.logTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // mainTimer
@@ -47,6 +48,7 @@
             this.richTextBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.richTextBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.richTextBox1.Location = new System.Drawing.Point(14, 221);
             this.richTextBox1.Margin = new System.Windows.Forms.Padding(4);
             this.richTextBox1.Name = "richTextBox1";
@@ -85,6 +87,12 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // logTimer
+            // 
+            this.logTimer.Enabled = true;
+            this.logTimer.Interval = 50;
+            this.logTimer.Tick += new System.EventHandler(this.logTimer_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -113,6 +121,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label stateLabel;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Timer logTimer;
     }
 }
 
