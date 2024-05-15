@@ -64,6 +64,8 @@ namespace DS3AutoClip
                     game = new GameProcess(process);
             }
 
+            Log($"Player health: {GetPlayerHealth()}");
+
 
             if (game == null)
             {
@@ -75,6 +77,33 @@ namespace DS3AutoClip
             }
 
             UpdateUI();
+            game?.ClearOldCaches();
+        }
+
+        private int? GetPlayerHealth()
+        {
+            if (game == null)
+                return null;
+
+            var addr = game
+                .AddressOf(GameProcess.WorldChrMan)
+                .Deref()
+                .Deref(offset: 0x80)
+                .Deref(offset: 0x1f90)
+                .Deref(offset: 0x18)
+                .Offset(0xd8);
+
+            if (!addr.IsValid)
+                return null;
+
+            try
+            {
+                return addr.Read<int>();
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static Process FindDS3Process()
@@ -97,27 +126,33 @@ namespace DS3AutoClip
                 return;
             }
 
-            ulong x = 0x7FF4911a0aa0;
-            for (var i = 0; i < game.Process.Modules.Count; i++)
+            ulong x = 0x7FF718A57290;
+            var symbol = GameProcess.GameMan;
+            var found = game.FindSymbol(symbol, out var symbolAddr);
+
+            var levelAddr = game
+                .AddressOf(GameProcess.GameDataMan)
+                .Deref()
+                .Deref(offset: 0x10)
+                .Offset(0x70);
+            var level = levelAddr.Read<int>();
+
+            /*var module = game.Process.MainModule;
+            var mBytes = game.Memory.ReadBytes(module.BaseAddress, module.ModuleMemorySize);
+            if (symbol.Find(mBytes, out var symbolIndex))
             {
-                var m = game.Process.Modules[i];
-                if ((ulong)m.BaseAddress <= x && (ulong)m.BaseAddress + (ulong)m.ModuleMemorySize >= x)
-                {
-                    int asda = 0;
-                }
-            }
+                var instructionBytes = mBytes.Slice(symbolIndex, length: 16);
+                var instructionAddress = (IntPtr)(module.BaseAddress.ToInt64() + symbolIndex);
+                var symbolAddress = Disassembler.GetAddressFromInstruction(instructionBytes, instructionAddress);
+            }*/
 
-            var module = game.Process.MainModule;
-            var data = game.Memory.ReadBytes(module.BaseAddress, module.ModuleMemorySize);
-            GameProcess.GameDataMan.Search(data, out var foundIndex);
 
-            var pages = game.Memory.QueryPages();
-            var found = pages.Where(p => p.BaseAddress <= x && x < p.BaseAddress + p.RegionSize).ToArray();
-            var totalMemory = pages.Where(p => p.Protect == MemProtect.PAGE_READWRITE).Select(p => (long)p.RegionSize).Sum();
+
+            // var addrFound = game.FindSymbol(symbol, out var address);
 
             //var health = mem.ReadMemory<int>((IntPtr)0x7FF4A6F79FD8);
             //Log($"Current health is {health}");
-
+            GC.Collect();
         }
     }
 }

@@ -94,7 +94,7 @@ namespace DS3AutoClip
             var p = IntPtr.Zero;
             while (VirtualQueryEx(pHandle, p, out var info, sizeOf) == sizeOf)
             {
-                if (info.State == MemState.COMMIT && (info.Type == MemType.MAPPED || info.Type == MemType.PRIVATE))
+                if (info.State == MemState.COMMIT)
                 {
                     pages.Add(info);
                 }
