@@ -85,6 +85,26 @@ namespace DS3AutoClip
             WriteProcessMemory(pHandle, Adress, buffer, buffer.Length, out numberOfBytesWritten);
         }
 
+        public MemoryBasicInformation[] QueryPages()
+        {
+            var pages = new List<MemoryBasicInformation>();
+
+            var sizeOf = (UIntPtr)Marshal.SizeOf<MemoryBasicInformation>();
+
+            var p = IntPtr.Zero;
+            while (VirtualQueryEx(pHandle, p, out var info, sizeOf) == sizeOf)
+            {
+                if (info.State == MemState.COMMIT && (info.Type == MemType.MAPPED || info.Type == MemType.PRIVATE))
+                {
+                    pages.Add(info);
+                }
+
+                p = (IntPtr)(info.BaseAddress + info.RegionSize);
+            }
+
+            return pages.ToArray();
+        }
+
         #region Transformation
         public static float[] ConvertToFloatArray(byte[] bytes)
         {

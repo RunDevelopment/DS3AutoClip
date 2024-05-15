@@ -88,17 +88,19 @@ namespace DS3AutoClip
 
         public MemoryBasicInformation[] GetPages()
         {
-            var now = DateTime.UtcNow;
-
             if (lastPages != null)
             {
                 var (pages, time) = lastPages.Value;
-                var timeSinceLastQuery = Math.Abs((time - now).TotalMilliseconds);
+                var timeSinceLastQuery = Math.Abs((time - DateTime.UtcNow).TotalMilliseconds);
                 const double TimeToLive = 50;
 
                 if (timeSinceLastQuery < TimeToLive)
                     return pages;
             }
+
+            var freshPages = Memory.QueryPages();
+            lastPages = (freshPages, DateTime.UtcNow);
+            return freshPages;
         }
 
         public static readonly SymbolData GameDataMan = new SymbolData("GameDataMan", aob: "48 8B 05 ?? ?? ?? ?? 48 85 C0 ?? ?? 48 8B 40 ?? C3");
