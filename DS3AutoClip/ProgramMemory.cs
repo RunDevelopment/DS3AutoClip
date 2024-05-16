@@ -4,10 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
 
 // Based on: https://github.com/C0reTheAlpaca/C0reExternal-Base-v2/blob/master/Memory.cs
 

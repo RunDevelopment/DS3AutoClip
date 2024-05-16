@@ -9,19 +9,18 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Windows.Forms;
 using System.Globalization;
-using System.Reflection;
 
 namespace DS3AutoClip
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
         public GameProcess game = null;
-        DS3GameValues DS3 = new DS3GameValues();
+        public readonly DS3GameValues DS3 = new DS3GameValues();
 
-        private List<string> logLines = new List<string>();
-        private List<string> pendingLogLines = new List<string>();
+        private readonly List<string> logLines = new List<string>();
+        private readonly List<string> pendingLogLines = new List<string>();
 
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
             UpdateUI();
@@ -34,13 +33,17 @@ namespace DS3AutoClip
             {
                 stateText = "DS3 not running";
             }
-            else if (DS3.IsLevelLoaded)
+            else if (DS3.IsLevelLoaded.Value)
             {
                 stateText = "Gaming";
             }
+            else if (DS3.IsTitleScreen.Value)
+            {
+                stateText = "Title screen";
+            }
             else
             {
-                stateText = "Other";
+                stateText = "Loading";
             }
 
 
@@ -66,6 +69,7 @@ namespace DS3AutoClip
                 Log($"Player Health: {DS3.PlayerHP.Value}");
                 Log($"Player Char t: {DS3.PlayerCharacterType.Value}");
                 Log($"Player Team t: {DS3.PlayerTeamType.Value}");
+                Log($"Player hollowing: {DS3.PlayerHollowing.Value}");
                 Log($"Invasion Type: {DS3.InvasionType.Value}");
                 Log($"Area for online: {DS3.AreaForOnlineActivity.Value}");
                 Log($"collision: {DS3.IsCollisionEnabled.Value}");
@@ -139,111 +143,6 @@ namespace DS3AutoClip
             //var health = mem.ReadMemory<int>((IntPtr)0x7FF4A6F79FD8);
             //Log($"Current health is {health}");
             GC.Collect();
-        }
-
-    }
-
-    public class DS3GameValues
-    {
-        // Player stats
-
-        public readonly ObvservedValue<int> PlayerHP = new ObvservedValue<int>(
-            GameProcess.WorldChrMan,
-            addr => addr.Deref()
-                .Deref(offset: 0x80)
-                .Deref(offset: 0x1f90)
-                .Deref(offset: 0x18)
-                .Offset(0xd8)
-        );
-        public readonly ObvservedValue<int> PlayerCharacterType = new ObvservedValue<int>(
-            GameProcess.WorldChrMan,
-            addr => addr.Deref()
-                .Deref(offset: 0x80)
-                .Offset(0x70)
-        );
-        public readonly ObvservedValue<int> PlayerTeamType = new ObvservedValue<int>(
-            GameProcess.WorldChrMan,
-            addr => addr.Deref()
-                .Deref(offset: 0x80)
-                .Offset(0x74)
-        );
-
-        // Misc
-
-        public readonly ObvservedValue<byte> IsCollisionEnabled = new ObvservedValue<byte>(
-            GameProcess.FieldArea,
-            addr => addr.Deref()
-                .Deref(offset: 0x60)
-                .Offset(0x48)
-        );
-        public bool IsLevelLoaded { get => IsCollisionEnabled.Value != null; }
-
-        // Multiplayer
-
-        public readonly ObvservedValue<int> AreaForOnlineActivity = new ObvservedValue<int>(
-            GameProcess.WorldChrMan,
-            addr => addr.Deref()
-                .Deref(offset: 0x80)
-                .Offset(0x1abc)
-        );
-        public readonly ObvservedValue<int> InvasionType = new ObvservedValue<int>(
-            GameProcess.GameMan,
-            addr => addr.Deref()
-                .Offset(0xC54)
-        );
-
-        public void Update(GameProcess game)
-        {
-            var valueFields = typeof(DS3GameValues).GetFields(BindingFlags.Instance | BindingFlags.Public);
-            foreach (var field in valueFields)
-            {
-                var obsValue = field.GetValue(this);
-                var ovType = obsValue.GetType();
-                var updateMethod = ovType.GetMethod("Update");
-                updateMethod.Invoke(obsValue, new object[] { game });
-            }
-        }
-    }
-
-    public class ObvservedValue<T>
-        where T : struct
-    {
-        public T? Value = null;
-        public T? Prev = null;
-
-        private readonly SymbolData symbol;
-        private readonly Func<GameProcess.Addr, GameProcess.Addr> addrFn;
-
-        public ObvservedValue(SymbolData symbol, Func<GameProcess.Addr, GameProcess.Addr> addrFn)
-        {
-            this.symbol = symbol;
-            this.addrFn = addrFn;
-        }
-
-        private T? GetFreshValue(GameProcess game)
-        {
-            if (game == null)
-                return null;
-
-            var addr = addrFn(game.AddressOf(symbol));
-            if (!addr.IsValid)
-                return null;
-
-            try
-            {
-                return addr.Read<T>();
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public void Update(GameProcess game)
-        {
-            var newValue = GetFreshValue(game);
-            Prev = Value;
-            Value = newValue;
         }
     }
 }
