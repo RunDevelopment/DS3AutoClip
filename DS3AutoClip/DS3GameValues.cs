@@ -41,6 +41,7 @@ namespace DS3AutoClip
                 .Deref(offset: 0x60)
                 .Offset(0x48)
         );
+
         public DerivedValue<byte, bool> IsLevelLoaded { get => IsCollisionEnabled.Derive(v => v != null); }
         public DerivedValue<byte, bool> IsTitleScreen { get => PlayerHollowing.Derive(v => v == null || v == 255); }
 

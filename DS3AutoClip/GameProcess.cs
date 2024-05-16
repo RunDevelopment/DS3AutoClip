@@ -86,7 +86,21 @@ namespace DS3AutoClip
         private Dictionary<ProcessModule, (byte[] data, DateTime time)> moduleMemoryCache
             = new Dictionary<ProcessModule, (byte[] data, DateTime time)>();
 
-        public bool IsAlive { get => !Process.HasExited; }
+        public bool IsAlive
+        {
+            get
+            {
+                try
+                {
+                    return !Process.HasExited;
+                }
+                catch (Exception)
+                {
+                    // access violation = process dead
+                    return false;
+                }
+            }
+        }
 
         public GameProcess(Process process)
         {

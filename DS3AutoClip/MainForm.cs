@@ -28,6 +28,8 @@ namespace DS3AutoClip
 
         private void UpdateUI()
         {
+            var chrType = DS3.PlayerCharacterType.Value;
+
             string stateText;
             if (game == null)
             {
@@ -35,7 +37,14 @@ namespace DS3AutoClip
             }
             else if (DS3.IsLevelLoaded.Value)
             {
-                stateText = "Gaming";
+                if (chrType != 0)
+                {
+                    stateText = "Gaming (summoned)";
+                }
+                else
+                {
+                    stateText = "Gaming";
+                }
             }
             else if (DS3.IsTitleScreen.Value)
             {
@@ -43,7 +52,14 @@ namespace DS3AutoClip
             }
             else
             {
-                stateText = "Loading";
+                if (chrType != null && chrType != 0)
+                {
+                    stateText = "Loading into another world";
+                }
+                else
+                {
+                    stateText = "Loading";
+                }
             }
 
 
@@ -53,7 +69,11 @@ namespace DS3AutoClip
         private void mainTimer_Tick(object sender, EventArgs e)
         {
             if (game != null && !game.IsAlive)
+            {
+                // unload game instance and free resources
                 game = null;
+                GC.Collect();
+            }
 
             if (game == null)
             {
@@ -73,7 +93,7 @@ namespace DS3AutoClip
                 Log($"Invasion Type: {DS3.InvasionType.Value}");
                 Log($"Area for online: {DS3.AreaForOnlineActivity.Value}");
                 Log($"collision: {DS3.IsCollisionEnabled.Value}");
-                Log($"Level loaded: {DS3.IsLevelLoaded}");
+                Log($"Level loaded: {DS3.IsLevelLoaded.Value}");
             }
 
             UpdateUI();
