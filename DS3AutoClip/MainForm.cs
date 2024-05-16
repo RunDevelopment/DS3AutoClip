@@ -189,7 +189,7 @@ namespace DS3AutoClip
             if (startEvent == gameEvent) startAction.Action();
 
             var stopEvent = GameEvents.ParseLabel((string)stopEventComboBox.SelectedItem);
-            var stopAction = (EventAction)startActionComboBox.SelectedItem;
+            var stopAction = (EventAction)stopActionComboBox.SelectedItem;
             if (stopEvent == gameEvent) stopAction.Action();
 
             eventHistory.Add(gameEvent);
