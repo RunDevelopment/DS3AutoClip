@@ -14,24 +14,7 @@ namespace DS3AutoClip
         public GameState gameState = GameState.NoGame;
         public readonly DS3GameValues DS3 = new DS3GameValues();
 
-        private readonly List<string> logLines = new List<string>();
-        private readonly List<string> pendingLogLines = new List<string>();
-
-        private readonly List<EventRecord> eventHistory = new List<EventRecord>();
-        private readonly struct EventRecord
-        {
-            public readonly GameEvent Event;
-            public readonly DateTime Time;
-
-            public EventRecord(GameEvent e)
-            {
-                Event = e;
-                Time = DateTime.UtcNow;
-            }
-
-            public static implicit operator EventRecord(GameEvent e) => new EventRecord(e);
-            public static implicit operator GameEvent(EventRecord e) => e.Event;
-        }
+        public string targetProcessName = "obs64";
 
         public MainForm()
         {
@@ -49,11 +32,165 @@ namespace DS3AutoClip
             stopEventComboBox.Items.Clear();
             stopEventComboBox.Items.AddRange(GameEvents.Labels.Values.ToArray());
             stopEventComboBox.SelectedItem = GameEvent.LeavingAnotherWorld.GetLabel();
+
+            Action SendKey(VK key)
+            {
+                return () =>
+                {
+                    var processes = Process.GetProcessesByName(targetProcessName);
+                    Log($"Sending {key} to {targetProcessName} ({processes.Length})");
+                    foreach (var process in processes)
+                        Keyboard.SendKey(process.MainWindowHandle, key);
+                };
+            }
+
+            var actions = new EventAction[]
+            { 
+                new EventAction("None", () => {}),
+                new EventAction("Key F2", SendKey(VK.F2)),
+                new EventAction("Key F3", SendKey(VK.F3)),
+                new EventAction("Key F4", SendKey(VK.F4)),
+                new EventAction("Key F5", SendKey(VK.F5)),
+                new EventAction("Key F6", SendKey(VK.F6)),
+                new EventAction("Key F7", SendKey(VK.F7)),
+                new EventAction("Key F8", SendKey(VK.F8)),
+                new EventAction("Key F9", SendKey(VK.F9)),
+                new EventAction("Key F10", SendKey(VK.F10)),
+                new EventAction("Key F11", SendKey(VK.F11)),
+                new EventAction("Key F12", SendKey(VK.F12)),
+            };
+
+            startActionComboBox.Items.Clear();
+            startActionComboBox.Items.AddRange(actions);
+            startActionComboBox.SelectedIndex = 0;
+
+            stopActionComboBox.Items.Clear();
+            stopActionComboBox.Items.AddRange(actions);
+            stopActionComboBox.SelectedIndex = 0;
+
+            UpdateProcessSelector();
+        }
+
+        #region Process Selector
+
+        private static Process[] GetWindowProcesses()
+        {
+            var ignore = new string[] { 
+                // windows stuff
+                "explorer",
+                "conhost",
+                "TextInputHost",
+                // game stuff
+                "steamwebhelper",
+                "DarkSoulsIII",
+                // this process
+                Process.GetCurrentProcess().ProcessName
+            };
+
+            return Process.GetProcesses()
+                .Where(p =>
+                {
+                    if (ignore.Contains(p.ProcessName))
+                        return false;
+                    return p.MainWindowHandle != IntPtr.Zero;
+                })
+                .ToArray();
+        }
+        private void UpdateProcessSelector()
+        {
+            var processes = GetWindowProcesses()
+                .GroupBy(p => p.ProcessName)
+                .Select(g =>
+                {
+                    var p = g.First();
+                    return new ProcessRecord(p.ProcessName, p.MainWindowTitle);
+                })
+                .ToList();
+
+            if (!processes.Any(p => p.Name == targetProcessName))
+            {
+                processes.Add(new ProcessRecord(targetProcessName));
+            }
+
+            processes.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.InvariantCultureIgnoreCase));
+            var selectedIndex = processes.FindIndex(p => p.Name == targetProcessName);
+
+            targetProcessComboBox.Items.Clear();
+            targetProcessComboBox.Items.AddRange(processes.ToArray());
+            targetProcessComboBox.SelectedIndex = selectedIndex;
+        }
+        private void processTimer_Tick(object sender, EventArgs e)
+        {
+            UpdateProcessSelector();
+        }
+        private void targetProcessComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var selected = (ProcessRecord)targetProcessComboBox.SelectedItem;
+            if (selected.Name != targetProcessName)
+            {
+                targetProcessName = selected.Name;
+                UpdateProcessSelector();
+            }
+        }
+
+        private void targetProcessComboBox_DropDown(object sender, EventArgs e)
+        {
+            Log("1");
+            processTimer.Stop();
+        }
+        private void targetProcessComboBox_DropDownClosed(object sender, EventArgs e)
+        {
+            Log("2");
+            SetTimeout(() =>
+            {
+                processTimer.Start();
+                UpdateProcessSelector();
+            }, 10);
+        }
+
+        public static void SetTimeout(Action action, int timeout)
+        {
+            var timer = new System.Windows.Forms.Timer();
+            timer.Interval = timeout;
+            timer.Tick += delegate (object sender, EventArgs args)
+            {
+                action();
+                timer.Stop();
+            };
+            timer.Start();
+        }
+
+        #endregion
+
+        #region Tick Logic
+
+        private readonly List<EventRecord> eventHistory = new List<EventRecord>();
+        private readonly struct EventRecord
+        {
+            public readonly GameEvent Event;
+            public readonly DateTime Time;
+
+            public EventRecord(GameEvent e)
+            {
+                Event = e;
+                Time = DateTime.UtcNow;
+            }
+
+            public static implicit operator EventRecord(GameEvent e) => new EventRecord(e);
+            public static implicit operator GameEvent(EventRecord e) => e.Event;
         }
 
         private void FireEvent(GameEvent gameEvent)
         {
             Log($"Event: {gameEvent}");
+
+            var startEvent = GameEvents.ParseLabel((string)startEventComboBox.SelectedItem);
+            var startAction = (EventAction)startActionComboBox.SelectedItem;
+            if (startEvent == gameEvent) startAction.Action();
+
+            var stopEvent = GameEvents.ParseLabel((string)stopEventComboBox.SelectedItem);
+            var stopAction = (EventAction)startActionComboBox.SelectedItem;
+            if (stopEvent == gameEvent) stopAction.Action();
 
             eventHistory.Add(gameEvent);
         }
@@ -153,6 +290,13 @@ namespace DS3AutoClip
             UpdateUI();
         }
 
+        #endregion
+
+        #region Logging
+
+        private readonly List<string> logLines = new List<string>();
+        private readonly List<string> pendingLogLines = new List<string>();
+
         private void Log(string message)
         {
             var now = DateTime.Now.ToString("s", CultureInfo.InvariantCulture).Replace("T", " ");
@@ -176,24 +320,18 @@ namespace DS3AutoClip
             }
         }
 
+        #endregion
+
         private void button1_Click(object sender, EventArgs e)
         {
+            FireEvent(GameEvent.EnteredAnotherWorld);
+
             if (game == null)
             {
                 Log("No game found");
                 return;
             }
 
-            ulong x = 0x7FF718A57290;
-            var symbol = GameProcess.GameMan;
-            var found = game.FindSymbol(symbol, out var symbolAddr);
-
-            var levelAddr = game
-                .AddressOf(GameProcess.GameDataMan)
-                .Deref()
-                .Deref(offset: 0x10)
-                .Offset(0x70);
-            var level = levelAddr.Read<int>();
 
             /*var module = game.Process.MainModule;
             var mBytes = game.Memory.ReadBytes(module.BaseAddress, module.ModuleMemorySize);
@@ -212,6 +350,7 @@ namespace DS3AutoClip
             //Log($"Current health is {health}");
             GC.Collect();
         }
+
     }
 
     public enum GameState
@@ -223,6 +362,7 @@ namespace DS3AutoClip
         GamingOwnWorld,
         GamingAnotherWorld,
     }
+
     public enum GameEvent
     {
         LoadingAnotherWorld,
@@ -252,6 +392,60 @@ namespace DS3AutoClip
         public static string GetLabel(this GameEvent e)
         {
             return Labels[e];
+        }
+    }
+
+    public class EventAction
+    {
+        public readonly string Label;
+        public readonly Action Action;
+
+        public EventAction(string label, Action action)
+        {
+            Label = label;
+            Action = action;
+        }
+
+        public override string ToString()
+        {
+            return Label;
+        }
+    }
+
+    public class ProcessRecord : IEquatable<ProcessRecord>
+    {
+        public readonly string Name;
+        public readonly string Title = null;
+
+        public ProcessRecord(string name, string title = null)
+        {
+            Name = name;
+            Title = title;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is ProcessRecord other)
+                return Equals(other);
+            return base.Equals(obj);
+        }
+        public bool Equals(ProcessRecord other)
+        {
+            return Name == other.Name && Title == other.Title;
+        }
+
+        public override int GetHashCode()
+        {
+            if (Title == null)
+                return Name.GetHashCode();
+            return Name.GetHashCode() ^ Title.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            if (Title == null)
+                return $"{Name}: not running";
+            return $"{Name}: {Title}";
         }
     }
 }

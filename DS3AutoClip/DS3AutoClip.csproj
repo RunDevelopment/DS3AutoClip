@@ -58,6 +58,7 @@
     <Compile Include="Disassembler.cs" />
     <Compile Include="DS3GameValues.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="Keyboard.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -44,6 +44,9 @@
             this.stopEventComboBox = new System.Windows.Forms.ComboBox();
             this.startActionComboBox = new System.Windows.Forms.ComboBox();
             this.stopActionComboBox = new System.Windows.Forms.ComboBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.targetProcessComboBox = new System.Windows.Forms.ComboBox();
+            this.processTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // mainTimer
@@ -57,10 +60,10 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.richTextBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.richTextBox1.Location = new System.Drawing.Point(14, 172);
+            this.richTextBox1.Location = new System.Drawing.Point(14, 220);
             this.richTextBox1.Margin = new System.Windows.Forms.Padding(4);
             this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(447, 108);
+            this.richTextBox1.Size = new System.Drawing.Size(447, 60);
             this.richTextBox1.TabIndex = 0;
             this.richTextBox1.Text = "";
             // 
@@ -134,7 +137,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(13, 123);
+            this.label5.Location = new System.Drawing.Point(13, 119);
             this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(44, 17);
@@ -178,7 +181,7 @@
             "b",
             "c",
             "d"});
-            this.startActionComboBox.Location = new System.Drawing.Point(98, 120);
+            this.startActionComboBox.Location = new System.Drawing.Point(98, 116);
             this.startActionComboBox.Name = "startActionComboBox";
             this.startActionComboBox.Size = new System.Drawing.Size(160, 25);
             this.startActionComboBox.TabIndex = 10;
@@ -192,10 +195,40 @@
             "b",
             "c",
             "d"});
-            this.stopActionComboBox.Location = new System.Drawing.Point(282, 120);
+            this.stopActionComboBox.Location = new System.Drawing.Point(282, 116);
             this.stopActionComboBox.Name = "stopActionComboBox";
             this.stopActionComboBox.Size = new System.Drawing.Size(160, 25);
             this.stopActionComboBox.TabIndex = 11;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(13, 162);
+            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(70, 17);
+            this.label6.TabIndex = 12;
+            this.label6.Text = "Key Target";
+            // 
+            // targetProcessComboBox
+            // 
+            this.targetProcessComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.targetProcessComboBox.FormattingEnabled = true;
+            this.targetProcessComboBox.Items.AddRange(new object[] {
+            "None"});
+            this.targetProcessComboBox.Location = new System.Drawing.Point(98, 159);
+            this.targetProcessComboBox.Name = "targetProcessComboBox";
+            this.targetProcessComboBox.Size = new System.Drawing.Size(344, 25);
+            this.targetProcessComboBox.TabIndex = 13;
+            this.targetProcessComboBox.DropDown += new System.EventHandler(this.targetProcessComboBox_DropDown);
+            this.targetProcessComboBox.SelectedIndexChanged += new System.EventHandler(this.targetProcessComboBox_SelectedIndexChanged);
+            this.targetProcessComboBox.DropDownClosed += new System.EventHandler(this.targetProcessComboBox_DropDownClosed);
+            // 
+            // processTimer
+            // 
+            this.processTimer.Enabled = true;
+            this.processTimer.Interval = 3000;
+            this.processTimer.Tick += new System.EventHandler(this.processTimer_Tick);
             // 
             // MainForm
             // 
@@ -203,6 +236,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
             this.ClientSize = new System.Drawing.Size(475, 296);
+            this.Controls.Add(this.targetProcessComboBox);
+            this.Controls.Add(this.label6);
             this.Controls.Add(this.stopActionComboBox);
             this.Controls.Add(this.startActionComboBox);
             this.Controls.Add(this.stopEventComboBox);
@@ -217,7 +252,6 @@
             this.Controls.Add(this.richTextBox1);
             this.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ForeColor = System.Drawing.Color.White;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
@@ -244,6 +278,9 @@
         private System.Windows.Forms.ComboBox stopEventComboBox;
         private System.Windows.Forms.ComboBox startActionComboBox;
         private System.Windows.Forms.ComboBox stopActionComboBox;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.ComboBox targetProcessComboBox;
+        private System.Windows.Forms.Timer processTimer;
     }
 }
 
