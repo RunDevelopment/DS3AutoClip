@@ -22,5 +22,53 @@ namespace DS3AutoClip.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string StartAction {
+            get {
+                return ((string)(this["StartAction"]));
+            }
+            set {
+                this["StartAction"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string StartEvent {
+            get {
+                return ((string)(this["StartEvent"]));
+            }
+            set {
+                this["StartEvent"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string StopAction {
+            get {
+                return ((string)(this["StopAction"]));
+            }
+            set {
+                this["StopAction"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string StopEvent {
+            get {
+                return ((string)(this["StopEvent"]));
+            }
+            set {
+                this["StopEvent"] = value;
+            }
+        }
     }
 }

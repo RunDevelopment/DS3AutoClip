@@ -36,7 +36,7 @@ After everything is setup, you just need to run Auto Clip and OBS Studio in the 
 ### Actions
 
 - **None**: Do nothing.
-- **Key F2** to **Key F12**: Simulate a pressing the select FN key. The key press is only sent to the selected process.
+- **Key F2** to **Key F12**: Simulate a pressing the select FN key. The key press is only sent to the selected key target process.
 
 ### Key Target
 

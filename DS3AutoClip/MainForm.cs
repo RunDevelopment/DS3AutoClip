@@ -5,6 +5,8 @@ using System.Text;
 using System.Diagnostics;
 using System.Windows.Forms;
 using System.Globalization;
+using System.IO;
+using System.Drawing;
 
 namespace DS3AutoClip
 {
@@ -14,24 +16,49 @@ namespace DS3AutoClip
         public GameState gameState = GameState.NoGame;
         public readonly DS3GameValues DS3 = new DS3GameValues();
 
-        public string targetProcessName = "obs64";
+        public static readonly string ObsPath = @"C:\Program Files\obs-studio\bin\64bit\obs64.exe";
+        public static readonly string ObsProcessName = @"obs64";
+        private bool obsPathExists = false;
+
+        public string targetProcessName = ObsProcessName;
+
+        private Properties.Settings settings = Properties.Settings.Default;
 
         public MainForm()
         {
             InitializeComponent();
+
+            obsPathExists = File.Exists(ObsPath);
+
             InitUI();
             UpdateUI();
+
+            FormClosing += (_, e) => settings.Save();
         }
 
         private void InitUI()
         {
+            GameEvent ParseEvent(string s, GameEvent orElse)
+            {
+                try
+                {
+                    return GameEvents.ParseLabel(s);
+                }
+                catch (Exception)
+                {
+                    return orElse;
+                }
+            }
+
             startEventComboBox.Items.Clear();
             startEventComboBox.Items.AddRange(GameEvents.Labels.Values.ToArray());
-            startEventComboBox.SelectedItem = GameEvent.EnteredAnotherWorld.GetLabel();
+            startEventComboBox.SelectedItem = ParseEvent(settings.StartEvent, GameEvent.EnteredAnotherWorld).GetLabel();
+            startEventComboBox.SelectedValueChanged += (_, e) => settings.StartEvent = (string)startEventComboBox.SelectedItem;
 
             stopEventComboBox.Items.Clear();
             stopEventComboBox.Items.AddRange(GameEvents.Labels.Values.ToArray());
-            stopEventComboBox.SelectedItem = GameEvent.LeavingAnotherWorld.GetLabel();
+            stopEventComboBox.SelectedItem = ParseEvent(settings.StopEvent, GameEvent.LeavingAnotherWorld).GetLabel();
+            stopEventComboBox.SelectedValueChanged += (_, e) => settings.StopEvent = (string)stopEventComboBox.SelectedItem;
 
             Action SendKey(VK key)
             {
@@ -45,7 +72,7 @@ namespace DS3AutoClip
             }
 
             var actions = new EventAction[]
-            { 
+            {
                 new EventAction("None", () => {}),
                 new EventAction("Key F2", SendKey(VK.F2)),
                 new EventAction("Key F3", SendKey(VK.F3)),
@@ -59,14 +86,21 @@ namespace DS3AutoClip
                 new EventAction("Key F11", SendKey(VK.F11)),
                 new EventAction("Key F12", SendKey(VK.F12)),
             };
+            int ParseActionIndex(string s, int orElse = 0)
+            {
+                var index = actions.ToList().FindIndex(e => e.Label == s);
+                return index == -1 ? orElse : index;
+            }
 
             startActionComboBox.Items.Clear();
             startActionComboBox.Items.AddRange(actions);
-            startActionComboBox.SelectedIndex = 0;
+            startActionComboBox.SelectedIndex = ParseActionIndex(settings.StartAction);
+            startActionComboBox.SelectedValueChanged += (_, e) => settings.StartAction = ((EventAction)startActionComboBox.SelectedItem).Label;
 
             stopActionComboBox.Items.Clear();
             stopActionComboBox.Items.AddRange(actions);
-            stopActionComboBox.SelectedIndex = 0;
+            stopActionComboBox.SelectedIndex = ParseActionIndex(settings.StopAction);
+            stopActionComboBox.SelectedValueChanged += (_, e) => settings.StopAction = ((EventAction)stopActionComboBox.SelectedItem).Label;
 
             UpdateProcessSelector();
         }
@@ -75,10 +109,11 @@ namespace DS3AutoClip
 
         private static Process[] GetWindowProcesses()
         {
-            var ignore = new string[] { 
+            var ignore = new string[] {
                 // windows stuff
                 "explorer",
                 "conhost",
+                "svchost",
                 "TextInputHost",
                 // game stuff
                 "steamwebhelper",
@@ -107,6 +142,8 @@ namespace DS3AutoClip
                 })
                 .ToList();
 
+            var obsRunning = processes.Any(p => p.Name == ObsProcessName);
+
             if (!processes.Any(p => p.Name == targetProcessName))
             {
                 processes.Add(new ProcessRecord(targetProcessName));
@@ -118,6 +155,8 @@ namespace DS3AutoClip
             targetProcessComboBox.Items.Clear();
             targetProcessComboBox.Items.AddRange(processes.ToArray());
             targetProcessComboBox.SelectedIndex = selectedIndex;
+
+            startObsButton.Enabled = obsPathExists && !obsRunning;
         }
         private void processTimer_Tick(object sender, EventArgs e)
         {
@@ -135,12 +174,10 @@ namespace DS3AutoClip
 
         private void targetProcessComboBox_DropDown(object sender, EventArgs e)
         {
-            Log("1");
             processTimer.Stop();
         }
         private void targetProcessComboBox_DropDownClosed(object sender, EventArgs e)
         {
-            Log("2");
             SetTimeout(() =>
             {
                 processTimer.Start();
@@ -148,9 +185,9 @@ namespace DS3AutoClip
             }, 10);
         }
 
-        public static void SetTimeout(Action action, int timeout)
+        private static void SetTimeout(Action action, int timeout)
         {
-            var timer = new System.Windows.Forms.Timer();
+            var timer = new Timer();
             timer.Interval = timeout;
             timer.Tick += delegate (object sender, EventArgs args)
             {
@@ -158,6 +195,24 @@ namespace DS3AutoClip
                 timer.Stop();
             };
             timer.Start();
+        }
+
+        private void startObsButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var info = new ProcessStartInfo(ObsPath)
+                {
+                    WindowStyle = ProcessWindowStyle.Normal,
+                    UseShellExecute = true,
+                    WorkingDirectory = Path.GetDirectoryName(ObsPath),
+                };
+                Process.Start(info);
+            }
+            catch (Exception ex)
+            {
+                Log(ex.ToString());
+            }
         }
 
         #endregion
@@ -206,7 +261,10 @@ namespace DS3AutoClip
                 [GameState.GamingAnotherWorld] = "Gaming in another world",
                 [GameState.GamingOwnWorld] = "Gaming",
             };
-            stateLabel.Text = stateLabels[gameState];
+
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            var versionString = $"v{version.Major}.{version.Minor}.{version.Build}";
+            this.Text = $"DS3 Auto Clip {versionString}  -  " + stateLabels[gameState];
         }
 
         private void UpdateGameValues()
@@ -297,6 +355,9 @@ namespace DS3AutoClip
         private readonly List<string> logLines = new List<string>();
         private readonly List<string> pendingLogLines = new List<string>();
 
+        private bool showLogs = false;
+        private int originalHeight = 0;
+
         private void Log(string message)
         {
             var now = DateTime.Now.ToString("s", CultureInfo.InvariantCulture).Replace("T", " ");
@@ -317,6 +378,28 @@ namespace DS3AutoClip
                 richTextBox1.Text = text;
                 richTextBox1.Select(text.Length, 0);
                 richTextBox1.ScrollToCaret();
+            }
+        }
+
+        private void logToggleLabel_Click(object sender, EventArgs e)
+        {
+            showLogs = !showLogs;
+
+            if (showLogs)
+            {
+                logToggleLabel.Text = "Hide logs";
+
+                var newHeight = 400;
+                originalHeight = Height;
+                Height = newHeight;
+                richTextBox1.Visible = true;
+                richTextBox1.Height = newHeight - originalHeight - 9;
+            }
+            else
+            {
+                logToggleLabel.Text = "Show logs";
+                Height = originalHeight;
+                richTextBox1.Visible = false;
             }
         }
 
@@ -351,6 +434,14 @@ namespace DS3AutoClip
             GC.Collect();
         }
 
+        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            ProcessStartInfo sInfo = new ProcessStartInfo("https://github.com/RunDevelopment/DS3AutoClip")
+            {
+                UseShellExecute = true
+            };
+            Process.Start(sInfo);
+        }
     }
 
     public enum GameState
