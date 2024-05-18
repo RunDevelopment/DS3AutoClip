@@ -6,7 +6,7 @@ Auto Clip is a simple tool to automatically control OBS to record your online ad
 
 > DS3 Auto Clip requires .net Framework 4.8 to run. This is included by default in Windows 10 & 11, but you may need to install it on older versions of Windows.
 
-Download the application [here]().
+Download the application [here](https://github.com/RunDevelopment/DS3AutoClip/releases/download/v1.0.0/DS3AutoClip-v1.0.0.zip).
 
 ## How it works
 
