@@ -16,9 +16,15 @@ This allows you to play online, while Auto Clip controls OBS in the background t
 
 ## Usage
 
-Auto Clip as 2 modes: Start and Stop. Each mode has an action (e.g. simulating a key press) and an event that triggers it (e.g. entering another world).
+![Auto Clip screenshot](images/screenshot.png)
 
-You also need to select a process to which the key presses will be sent. By default, this is OBS Studio, but you can change it to any other process you want. (There's also a handy *Start OBS* button to start OBS Studio if it's not running.)
+By default, Auto Clip will start recording with F7 when you enter another world and stop recording with F8 when you leave the world.
+
+OBS needs to be configured to start/stop recording with these shortcuts. You can do this by going to `File -> Settings -> Hotkeys` in OBS Studio and setting the `Start Recording` and `Stop Recording` shortcuts to F7 and F8 respectively.
+
+Of course, you also need to setup the actual game recording in OBS Studio. There are many [guides](https://obsproject.com/kb/game-capture-setup-guide) explaining this, so I won't repeat them here. I recommend testing the recording setup in OBS Studio by itself before using Auto Clip.
+
+After everything is setup, you just need to run Auto Clip and OBS Studio in the background while playing Dark Souls III. Auto Clip will automatically start and stop recording based on your online activity. Enjoy gaming and recording!
 
 ### Events
 
@@ -30,7 +36,13 @@ You also need to select a process to which the key presses will be sent. By defa
 ### Actions
 
 - **None**: Do nothing.
-- **Key F2** to **Key F12**: Simulate a pressing the select FN key. The key press is only sent to the selected process. No other process (e.g. Dark Souls III) will receive the key press.
+- **Key F2** to **Key F12**: Simulate a pressing the select FN key. The key press is only sent to the selected process.
+
+### Key Target
+
+Simulated key presses are sent to the selected process. By default, this is OBS Studio, but you can change it to any other process you want. No other process (e.g. Dark Souls III) will receive the key press.
+
+There's also a handy *Start OBS* button to start OBS Studio if it's not running.
 
 ## FAQ
 
