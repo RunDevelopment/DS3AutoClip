@@ -71,7 +71,7 @@ namespace DS3AutoClip
                 };
             }
 
-            var actions = new EventAction[]
+            var actions = new List<EventAction>()
             {
                 new EventAction("None", () => {}),
                 new EventAction("Key F2", SendKey(VK.F2)),
@@ -86,20 +86,22 @@ namespace DS3AutoClip
                 new EventAction("Key F11", SendKey(VK.F11)),
                 new EventAction("Key F12", SendKey(VK.F12)),
             };
+            var f7Index = actions.FindIndex(e => e.Label.Contains("F7"));
+            var f8Index = actions.FindIndex(e => e.Label.Contains("F8"));
             int ParseActionIndex(string s, int orElse = 0)
             {
-                var index = actions.ToList().FindIndex(e => e.Label == s);
+                var index = actions.FindIndex(e => e.Label == s);
                 return index == -1 ? orElse : index;
             }
 
             startActionComboBox.Items.Clear();
-            startActionComboBox.Items.AddRange(actions);
-            startActionComboBox.SelectedIndex = ParseActionIndex(settings.StartAction);
+            startActionComboBox.Items.AddRange(actions.ToArray());
+            startActionComboBox.SelectedIndex = ParseActionIndex(settings.StartAction, f7Index);
             startActionComboBox.SelectedValueChanged += (_, e) => settings.StartAction = ((EventAction)startActionComboBox.SelectedItem).Label;
 
             stopActionComboBox.Items.Clear();
-            stopActionComboBox.Items.AddRange(actions);
-            stopActionComboBox.SelectedIndex = ParseActionIndex(settings.StopAction);
+            stopActionComboBox.Items.AddRange(actions.ToArray());
+            stopActionComboBox.SelectedIndex = ParseActionIndex(settings.StopAction, f8Index);
             stopActionComboBox.SelectedValueChanged += (_, e) => settings.StopAction = ((EventAction)stopActionComboBox.SelectedItem).Label;
 
             UpdateProcessSelector();
